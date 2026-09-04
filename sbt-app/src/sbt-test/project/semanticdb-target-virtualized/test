@@ -1,0 +1,4 @@
+# scalacOptions are hashed into the compile cache key verbatim, so an absolute -semanticdb-target
+# pins every entry to one machine.
+> checkVirtualized
+> compile

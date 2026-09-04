@@ -69,13 +69,16 @@ object SemanticdbPlugin extends AutoPlugin {
     semanticdbOptions --= Def.settingDyn {
       val scalaV = scalaVersion.value
       val config = configuration.value
+      val converter = fileConverter.value
       Def.setting {
         semanticdbTargetRoot.?.all(ancestorConfigs(config)).value.flatten
-          .flatMap(targetRootOptions(scalaV, _))
+          .flatMap(root => targetRootOptions(scalaV, converter.toVirtualFile(root.toPath).id))
       }
     }.value,
-    semanticdbOptions ++=
-      targetRootOptions(scalaVersion.value, semanticdbTargetRoot.value),
+    semanticdbOptions ++= targetRootOptions(
+      scalaVersion.value,
+      fileConverter.value.toVirtualFile(semanticdbTargetRoot.value.toPath).id
+    ),
     scalacOptions := (Def.taskDyn {
       val orig = scalacOptions.value
       val config = configuration.value
@@ -91,9 +94,12 @@ object SemanticdbPlugin extends AutoPlugin {
     }).value,
   )
 
-  def targetRootOptions(scalaVersion: String, targetRoot: File): Seq[String] = {
+  def targetRootOptions(scalaVersion: String, targetRoot: File): Seq[String] =
+    targetRootOptions(scalaVersion, targetRoot.toString)
+
+  def targetRootOptions(scalaVersion: String, targetRoot: String): Seq[String] = {
     if (ScalaInstance.isDotty(scalaVersion)) {
-      Seq("-semanticdb-target", targetRoot.toString)
+      Seq("-semanticdb-target", targetRoot)
     } else {
       Seq(s"-P:semanticdb:targetroot:$targetRoot")
     }
