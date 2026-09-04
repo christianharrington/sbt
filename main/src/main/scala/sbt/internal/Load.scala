@@ -500,9 +500,20 @@ private[sbt] object Load {
     mkEval(
       (defs.target).map(_.toPath) ++ unit.plugins.classpath.map(converter.toPath),
       defs.base,
-      unit.plugins.pluginData.scalacOptions,
+      resolveEvalScalacOptions(unit.plugins.pluginData.scalacOptions, converter),
     )
   }
+
+  // Eval drives the compiler directly, so unlike the ordinary compile path it never reaches zinc's
+  // ${ROOT} expansion in MixedAnalyzingCompiler. An option naming a virtualized path would otherwise
+  // arrive at scalac as the literal token.
+  private def resolveEvalScalacOptions(
+      options: Seq[String],
+      converter: FileConverter
+  ): Seq[String] =
+    converter match
+      case c: MappedFileConverter => Compiler.resolveVirtualizedScalacOptions(options, c.rootPaths)
+      case _                      => options
 
   def mkEval(classpath: Seq[Path], base: File, options: Seq[String]): Eval =
     mkEval(classpath, base, options, () => EvalReporter.console)

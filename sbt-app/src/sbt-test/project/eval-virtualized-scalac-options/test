@@ -1,0 +1,5 @@
+# Eval compiles set expressions with the meta-build's scalacOptions, so their ${ROOT} tokens have to
+# be resolved first, the way zinc resolves them on the ordinary compile path. Unresolved, scalac
+# creates a directory literally named ${OUT} next to the build.
+> set Global / scalaVersion := "3.8.4"
+$ exists target/out/jvm/eval-meta
